@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Produksjonsmøte – Sjekkliste | Spectre Beta 2.0</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:   #1A3A5C;
+    --blue:   #2E6DA4;
+    --lblue:  #D6E4F0;
+    --green:  #1A5C2A;
+    --lgreen: #E8F5EC;
+    --dgreen: #0F3D1A;
+    --white:  #FFFFFF;
+    --bg:     #F5F7FA;
+    --alt:    #EEF2F7;
+    --border: #C8D8E8;
+    --text:   #1E2D3D;
+    --muted:  #6B7F96;
+    --red:    #B82C2C;
+  }
+
+  body {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0 0 60px;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    background: var(--navy);
+    color: white;
+    padding: 14px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(26,58,92,0.18);
+  }
+  .topbar-left { display: flex; align-items: center; gap: 14px; }
+  .topbar-logo { font-size: 13px; font-weight: 600; letter-spacing: 0.08em; opacity: 0.6; font-family: 'DM Mono', monospace; }
+  .topbar-title { font-size: 15px; font-weight: 500; }
+  .topbar-badge { font-size: 11px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; padding: 2px 8px; font-family: 'DM Mono', monospace; }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+
+  /* ── PROGRESS ── */
+  .progress-wrap {
+    background: var(--navy);
+    padding: 0 32px 14px;
+  }
+  .progress-track {
+    height: 4px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: #3DD68C;
+    border-radius: 2px;
+    transition: width 0.4s cubic-bezier(0.4,0,0.2,1);
+    width: 0%;
+  }
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* ── MAIN LAYOUT ── */
+  .container {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 28px 20px 0;
+  }
+
+  /* ── META CARD ── */
+  .meta-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px 24px;
+  }
+  .meta-field label {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 4px;
+  }
+  .meta-field input {
+    width: 100%;
+    border: none;
+    border-bottom: 1.5px solid var(--border);
+    background: transparent;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    padding: 4px 0;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .meta-field input:focus { border-bottom-color: var(--blue); }
+
+  /* ── SECTION ── */
+  .section {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+  }
+  .section:has(.section-body.open) { box-shadow: 0 2px 16px rgba(46,109,164,0.08); }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 18px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .section-header:hover { background: var(--alt); }
+
+  .section-num {
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+    min-width: 18px;
+  }
+  .section-icon { font-size: 16px; line-height: 1; }
+  .section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--navy);
+    flex: 1;
+  }
+  .section-pill {
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+    background: var(--alt);
+    border-radius: 20px;
+    padding: 2px 9px;
+    transition: all 0.2s;
+  }
+  .section-pill.done { background: var(--lgreen); color: var(--green); }
+  .section-all-done {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+    color: transparent;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .section-all-done.done { background: var(--green); border-color: var(--green); color: white; }
+  .chevron {
+    font-size: 10px;
+    color: var(--muted);
+    transition: transform 0.22s;
+    flex-shrink: 0;
+  }
+  .chevron.open { transform: rotate(90deg); }
+
+  .section-body { display: none; border-top: 1px solid var(--border); }
+  .section-body.open { display: block; }
+
+  /* ── ITEMS ── */
+  .item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 18px;
+    cursor: pointer;
+    transition: background 0.1s;
+    border-bottom: 1px solid transparent;
+  }
+  .item:hover { background: var(--alt); }
+  .item:last-child { border-bottom: none; }
+  .item:nth-child(even) { background: var(--bg); }
+  .item:nth-child(even):hover { background: var(--alt); }
+
+  .cb {
+    width: 18px; height: 18px;
+    border: 1.5px solid var(--border);
+    border-radius: 4px;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    color: transparent;
+    transition: all 0.15s;
+    background: white;
+  }
+  .cb.checked { background: var(--green); border-color: var(--green); color: white; }
+
+  .item-text {
+    font-size: 13.5px;
+    color: var(--text);
+    flex: 1;
+    line-height: 1.4;
+    transition: color 0.15s;
+  }
+  .item-text.checked { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--border); }
+
+  .item-input {
+    border: none;
+    border-bottom: 1.5px solid var(--border);
+    background: transparent;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--text);
+    padding: 2px 0;
+    outline: none;
+    min-width: 130px;
+    max-width: 200px;
+    transition: border-color 0.2s;
+  }
+  .item-input:focus { border-bottom-color: var(--blue); }
+  .item-input::placeholder { color: var(--muted); font-style: italic; }
+
+  /* ── HMS special ── */
+  .sja-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 18px;
+    background: var(--bg);
+  }
+  .sja-label { font-size: 13.5px; color: var(--text); }
+  .sja-opts { display: flex; gap: 14px; margin-left: 4px; }
+  .sja-opt {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 13px; color: var(--text);
+    cursor: pointer; user-select: none;
+  }
+  .sja-opt input[type=radio] { accent-color: var(--blue); width: 14px; height: 14px; }
+
+  /* ── AVSLUTNING ── */
+  .section.closing .section-header { background: var(--lgreen); }
+  .section.closing .section-header:hover { background: #d4edda; }
+  .section.closing .section-title { color: var(--green); }
+  .section.closing .section-num { color: var(--green); opacity: 0.6; }
+  .section.closing .item { background: white; }
+  .section.closing .item:nth-child(even) { background: var(--lgreen); }
+  .section.closing .item:hover { background: #d4edda; }
+  .section.closing .cb { border-color: #8BC49A; }
+  .section.closing .cb.checked { background: var(--green); border-color: var(--green); }
+
+  /* ── NOTES TABLE ── */
+  .notes-section {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+  .notes-head {
+    background: var(--navy);
+    padding: 12px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    color: white;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .notes-table { width: 100%; border-collapse: collapse; }
+  .notes-table th {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    background: var(--alt);
+  }
+  .notes-table td {
+    padding: 0;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .notes-table tr:last-child td { border-bottom: none; }
+  .notes-table tr:nth-child(even) td { background: var(--bg); }
+  .notes-table input, .notes-table select {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--text);
+    padding: 10px 14px;
+    outline: none;
+  }
+  .notes-table input::placeholder { color: var(--border); }
+  .notes-table select { color: var(--muted); cursor: pointer; }
+
+  /* ── FOOTER ACTIONS ── */
+  .actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+    padding-bottom: 10px;
+  }
+  .btn {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 9px 18px;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1.5px solid var(--border);
+    background: white;
+    color: var(--text);
+  }
+  .btn:hover { background: var(--alt); }
+  .btn-primary { border-color: var(--blue); color: var(--blue); }
+  .btn-primary:hover { background: var(--lblue); }
+  .btn-ghost { color: var(--muted); border-color: transparent; }
+  .btn-ghost:hover { color: var(--text); border-color: var(--border); }
+  .btn-print { border-color: var(--navy); color: var(--navy); }
+  .btn-print:hover { background: var(--lblue); }
+
+  /* ── COMPLETION BANNER ── */
+  .done-banner {
+    display: none;
+    background: var(--lgreen);
+    border: 1px solid #8BC49A;
+    border-radius: 10px;
+    padding: 16px 24px;
+    margin-bottom: 10px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--green);
+  }
+  .done-banner.visible { display: block; }
+
+  /* ── SHAREPOINT BANNER ── */
+  .sp-banner { display: flex; background: #FFF8E1; border-bottom: 2px solid #F59E0B;
+    padding: 24px 32px; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+  .sp-banner.hidden { display: none; }
+  .sp-banner-icon { font-size: 28px; flex-shrink: 0; margin-top: 2px; }
+  .sp-banner-text { flex: 1; }
+  .sp-banner-text strong { display: block; font-size: 16px; font-weight: 600; color: #92400E; margin-bottom: 10px; }
+  .sp-banner-steps { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+  .sp-banner-steps li { display: flex; align-items: center; gap: 10px; font-size: 14px; color: #78350F; }
+  .sp-banner-steps .step-num { background: #F59E0B; color: white; font-weight: 600; font-size: 12px; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .sp-banner-steps code { background: #FEF3C7; border: 1px solid #F59E0B; border-radius: 4px; padding: 1px 6px; font-family: 'DM Mono', monospace; font-size: 13px; color: #92400E; }
+  .sp-banner-btn {
+    background: #1A3A5C;
+    color: white;
+    border: none;
+    border-radius: 7px;
+    padding: 10px 20px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .sp-banner-btn:hover { background: #2E6DA4; }
+  @media print {
+    @page { size: A4; margin: 14mm 12mm 14mm 12mm; }
+    .topbar, .progress-wrap, .actions { display: none !important; }
+    body { background: white; padding: 0; font-size: 11px; }
+    .container { max-width: 100%; padding: 0; }
+    .print-header { display: flex !important; }
+    .section { box-shadow: none; border: 1px solid #b0c4d8; border-radius: 4px; margin-bottom: 6px; page-break-inside: avoid; }
+    .section-body { display: block !important; }
+    .section-header { background: #1A3A5C !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 7px 12px; }
+    .section-title { color: white !important; font-size: 11px; }
+    .section-num { color: rgba(255,255,255,0.6) !important; }
+    .section-icon { font-size: 12px; }
+    .section-pill, .section-all-done, .chevron { display: none; }
+    .item { padding: 5px 12px; border-bottom: 1px solid #e8eef4; }
+    .item:nth-child(even) { background: #f4f7fa !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .item-text { font-size: 11px; }
+    .item-input { font-size: 11px; border-bottom: 1px solid #b0c4d8; min-width: 80px; }
+    .cb { width: 13px; height: 13px; border-radius: 2px; border: 1.5px solid #b0c4d8; font-size: 9px; }
+    .cb.checked { background: #1A5C2A !important; border-color: #1A5C2A !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .item-text.checked { color: #6B7F96 !important; text-decoration: line-through; }
+    .sja-row { padding: 5px 12px; font-size: 11px; }
+    .section.closing .section-header { background: #1A5C2A !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .meta-card { border: 1px solid #b0c4d8; border-radius: 4px; padding: 10px 14px; margin-bottom: 8px; gap: 8px 16px; }
+    .meta-field label { font-size: 9px; }
+    .meta-field input { font-size: 11px; }
+    .notes-section { border: 1px solid #b0c4d8; border-radius: 4px; margin-bottom: 6px; }
+    .notes-head { background: #1A3A5C !important; color: white !important; padding: 7px 12px; font-size: 11px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .notes-table th { font-size: 9px; padding: 6px 10px; background: #eef2f7 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .notes-table td { padding: 0; }
+    .notes-table input, .notes-table select { font-size: 10px; padding: 6px 10px; }
+    .notes-table tr:nth-child(even) td { background: #f4f7fa !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .done-banner.visible { display: block !important; font-size: 11px; padding: 8px 14px; }
+  }
+
+  .print-header {
+    display: none;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+    border-bottom: 2px solid #1A3A5C;
+  }
+  .print-header-title { font-size: 14px; font-weight: 600; color: #1A3A5C; }
+  .print-header-meta  { font-size: 10px; color: #6B7F96; font-family: monospace; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="topbar-logo">SPECTRE</span>
+    <span class="topbar-title">Produksjonsmøte – Sjekkliste</span>
+    <span class="topbar-badge">Beta 2.0</span>
+  </div>
+  <div class="topbar-right">
+    <button class="btn btn-ghost" onclick="toggleAll()" id="toggleAllBtn" style="padding:6px 12px;font-size:12px;">Åpne alle</button>
+    <button class="btn btn-print" onclick="window.print()" style="padding:6px 12px;font-size:12px;">🖨 Skriv ut</button>
+  </div>
+</div>
+
+<div class="sp-banner" id="spBanner">
+  <span class="sp-banner-icon">⚠️</span>
+  <div class="sp-banner-text">
+    <strong>Denne filen må åpnes i nettleseren for å fungere</strong>
+    <ol class="sp-banner-steps">
+      <li><span class="step-num">1</span> Klikk <code>···</code> (tre prikker) øverst til høyre i dette vinduet</li>
+      <li><span class="step-num">2</span> Velg <code>Åpne i nettleser</code> — eller <code>Last ned</code> og åpne filen fra nedlastinger</li>
+      <li><span class="step-num">3</span> Sjekklisten er fullt interaktiv i Edge eller Chrome</li>
+    </ol>
+  </div>
+</div>
+
+<div class="progress-wrap">
+  <div class="progress-track"><div class="progress-fill" id="progFill"></div></div>
+  <div class="progress-meta">
+    <span id="progText">0 av 0 punkter fullført</span>
+    <span id="progPct">0%</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="print-header">
+    <span class="print-header-title">PRODUKSJONSMØTE – SJEKKLISTE &nbsp;·&nbsp; Spectre Beta 2.0</span>
+    <span class="print-header-meta" id="printDate"></span>
+  </div>
+
+  <div class="meta-card">
+    <div class="meta-field"><label>Prosjekt</label><input placeholder="Navn på prosjekt..."></div>
+    <div class="meta-field"><label>Dato</label><input placeholder="dd.mm.åååå" type="text"></div>
+    <div class="meta-field"><label>Prosjektleder</label><input placeholder="Navn..."></div>
+    <div class="meta-field"><label>Venue</label><input placeholder="Sted..."></div>
+    <div class="meta-field"><label>Tilstede</label><input placeholder="Navn, navn..."></div>
+    <div class="meta-field"><label>Easy-job ref</label><input placeholder="Jobbnummer..."></div>
+  </div>
+
+  <div class="done-banner" id="doneBanner">✓ Alle punkter fullført – møtet er klart for arkivering</div>
+
+  <div id="sections"></div>
+
+  <div class="notes-section">
+    <div class="notes-head">📝 Åpne punkter & tiltak</div>
+    <table class="notes-table">
+      <thead>
+        <tr>
+          <th style="width:40%">Punkt / beskrivelse</th>
+          <th style="width:25%">Ansvarlig</th>
+          <th style="width:18%">Frist</th>
+          <th style="width:17%">Status</th>
+        </tr>
+      </thead>
+      <tbody id="notesBody"></tbody>
+    </table>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-primary" onclick="exportPdf()">📄 Opprett PDF</button>
+    <button class="btn" onclick="exportTxt()">⬇ Eksporter som tekst</button>
+    <button class="btn" onclick="kopierTekst()">📋 Kopier til utklippstavle</button>
+    <button class="btn" onclick="resetAll()">↺ Nullstill</button>
+  </div>
+
+</div>
+
+<script>
+const SECTIONS = [
+  { num:1, icon:'📋', title:'Prosjekt & kunde', items:[
+    { id:'kunde',   label:'Kunde / venue / nivå avklart' },
+    { id:'ksf',     label:'Kritiske suksessfaktorer gjennomgått' },
+    { id:'hensyn',  label:'Spesielle hensyn notert' },
+    { id:'venue',   label:'Venue klart ved ankomst – ryddet og tilgang avklart' },
+  ]},
+  { num:2, icon:'📐', title:'Tegninger & tidsplan', items:[
+    { id:'teg',       label:'Tegninger gjennomgått (VectorWorks) – avvik notert?' },
+    { id:'riggpkt',   label:'Scene / publikum / riggpunkter ok' },
+    { id:'flighter',  label:'Plassering flighter under load-in avklart' },
+    { id:'adkomst',   label:'Adkomst / lastesoner / heis ok' },
+    { id:'rekkef',    label:'Innlast / opprigg / show / nedrigg – rekkefølge i tak avklart' },
+    { id:'innrigg',   label:'Fagvis eller samlet innrigg bestemt' },
+    { id:'flaskeh',   label:'Flaskehalser og hard deadlines (dører / restriksjoner) identifisert' },
+    { id:'firstsite', label:'First on site / nøkkelankomst avklart' },
+  ]},
+  { num:3, icon:'👤', title:'Roller & ansvar', items:[
+    { id:'rl-opp',  label:'Riggleder opprigg:',  input:'Navn...' },
+    { id:'rl-ned',  label:'Riggleder nedrigg:',  input:'Navn...' },
+    { id:'fagans',  label:'Fagansvarlige avklart for alle fag' },
+    { id:'beslut',  label:'Beslutningslinje kjent for alle' },
+    { id:'crew',    label:'Felles crew: behov, tidsrom og oppgaver avklart' },
+  ]},
+  { num:4, icon:'🔧', title:'Teknikk & kommunikasjon', items:[
+    { id:'foh',     label:'FOH-plassering, strøm (inntak/fordeling) og kabelstrekk planlagt' },
+    { id:'sys',     label:'Systemland definert' },
+    { id:'backup',  label:'Backup / redundans avklart' },
+    { id:'intercom',label:'Intercom / sambandskanaler:', input:'Ansvarlig...' },
+  ]},
+  { num:5, icon:'🎭', title:'Scene, dekor & SoMe', items:[
+    { id:'dekor',   label:'Inndekning / teppe / dekor / scenografi:', input:'Ansvarlig...' },
+    { id:'foto',    label:'Foto / video dokumentasjon:', input:'Ansvarlig...' },
+    { id:'kundedok',label:'Kundeønsker dokumentasjon avklart' },
+  ]},
+  { num:6, icon:'🚛', title:'Praktisk drift & logistikk', items:[
+    { id:'lossing', label:'Lossing / lasting – ansvar avklart' },
+    { id:'kasser',  label:'Kasseflyt (inn / ut / tomkasser) og lagring tomgods planlagt' },
+    { id:'lift',    label:'Lift / truck-behov avklart' },
+    { id:'avfall',  label:'Avfall og ryddestruktur avklart' },
+    { id:'kost',    label:'Kost / losji / parkering ok' },
+    { id:'easyapp', label:'Oppdatert i EasyApp / Magic – tegninger og kontaktliste delt' },
+  ]},
+  { num:7, icon:'⛑', title:'HMS', items:[
+    { id:'risiko',  label:'Risiko identifisert' },
+    { id:'sja',     label:'__SJA__' },
+    { id:'vern',    label:'Verneutstyr på plass!' },
+  ]},
+  { num:8, icon:'✔', title:'Avslutning', closing:true, items:[
+    { id:'fagok',   label:'Alle fag bekrefter «ok»' },
+    { id:'apne',    label:'Åpne punkter logget og fordelt' },
+  ]},
+];
+
+const state = {};
+let allOpen = false;
+
+SECTIONS.forEach(s => s.items.forEach(i => { state[i.id] = false; }));
+SECTIONS.forEach(s => s._open = false);
+
+function render() {
+  const container = document.getElementById('sections');
+  container.innerHTML = '';
+
+  SECTIONS.forEach((sec, si) => {
+    const done = sec.items.filter(i => state[i.id]).length;
+    const total = sec.items.length;
+    const allDone = done === total;
+    const isOpen = sec._open;
+
+    const el = document.createElement('div');
+    el.className = 'section' + (sec.closing ? ' closing' : '');
+
+    const headerHtml = `
+      <div class="section-header" onclick="toggleSection(${si})">
+        <span class="section-num">${String(sec.num).padStart(2,'0')}</span>
+        <span class="section-icon">${sec.icon}</span>
+        <span class="section-title">${sec.title}</span>
+        <span class="section-pill ${allDone ? 'done' : ''}">${done}/${total}</span>
+        <span class="section-all-done ${allDone ? 'done' : ''}">${allDone ? '✓' : ''}</span>
+        <span class="chevron ${isOpen ? 'open' : ''}">▶</span>
+      </div>`;
+
+    const itemsHtml = sec.items.map((item) => {
+      if (item.id === 'sja') return `
+        <div class="sja-row">
+          <span class="sja-label">SJA nødvendig?</span>
+          <div class="sja-opts">
+            <label class="sja-opt"><input type="radio" name="sja" value="ja"> Ja</label>
+            <label class="sja-opt"><input type="radio" name="sja" value="nei" checked> Nei</label>
+          </div>
+          <span class="sja-label" style="margin-left:16px;color:var(--muted);">– tiltak avklart</span>
+        </div>`;
+      return `
+        <div class="item" onclick="toggleItem('${item.id}', event)">
+          <div class="cb ${state[item.id] ? 'checked' : ''}">${state[item.id] ? '✓' : ''}</div>
+          <span class="item-text ${state[item.id] ? 'checked' : ''}">${item.label}</span>
+          ${item.input ? `<input class="item-input" placeholder="${item.input}" onclick="event.stopPropagation()">` : ''}
+        </div>`;
+    }).join('');
+
+    el.innerHTML = headerHtml + `<div class="section-body ${isOpen ? 'open' : ''}">${itemsHtml}</div>`;
+    container.appendChild(el);
+  });
+
+  buildNotesTable();
+  updateProgress();
+}
+
+function buildNotesTable() {
+  const tbody = document.getElementById('notesBody');
+  if (tbody.children.length > 0) return;
+  for (let i = 0; i < 7; i++) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input placeholder="Beskriv punktet..."></td>
+      <td><input placeholder="Navn..."></td>
+      <td><input placeholder="dd.mm" type="text"></td>
+      <td><select><option value="">–</option><option>Åpen</option><option>Pågår</option><option>Lukket</option></select></td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+function toggleSection(si) {
+  SECTIONS[si]._open = !SECTIONS[si]._open;
+  render();
+}
+
+function toggleItem(id, e) {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+  state[id] = !state[id];
+  render();
+}
+
+function toggleAll() {
+  allOpen = !allOpen;
+  SECTIONS.forEach(s => s._open = allOpen);
+  document.getElementById('toggleAllBtn').textContent = allOpen ? 'Lukk alle' : 'Åpne alle';
+  render();
+}
+
+function resetAll() {
+  if (!confirm('Nullstill alle avkrysninger?')) return;
+  Object.keys(state).forEach(k => state[k] = false);
+  SECTIONS.forEach(s => s._open = false);
+  allOpen = false;
+  document.getElementById('toggleAllBtn').textContent = 'Åpne alle';
+  render();
+}
+
+function updateProgress() {
+  const keys = Object.keys(state).filter(k => k !== 'sja');
+  const total = keys.length;
+  const done = keys.filter(k => state[k]).length;
+  const pct = total ? Math.round(done / total * 100) : 0;
+  document.getElementById('progFill').style.width = pct + '%';
+  document.getElementById('progText').textContent = done + ' av ' + total + ' punkter fullført';
+  document.getElementById('progPct').textContent = pct + '%';
+  const banner = document.getElementById('doneBanner');
+  banner.classList.toggle('visible', done === total);
+}
+
+function exportTxt() {
+  const meta = document.querySelectorAll('.meta-field input');
+  let out = 'PRODUKSJONSMØTE – SJEKKLISTE (Spectre Beta 2.0)\n' + '='.repeat(52) + '\n\n';
+  const labels = ['Prosjekt','Dato','Prosjektleder','Venue','Tilstede','Easy-job ref'];
+  meta.forEach((el, i) => { if (el.value) out += labels[i] + ': ' + el.value + '\n'; });
+  out += '\n';
+  SECTIONS.forEach(sec => {
+    out += '\n' + sec.num + '. ' + sec.title.toUpperCase() + '\n' + '-'.repeat(40) + '\n';
+    sec.items.forEach(item => {
+      if (item.id === 'sja') {
+        const v = document.querySelector('input[name="sja"]:checked');
+        out += '[SJA] ' + (v ? v.value.toUpperCase() : '?') + ' – tiltak avklart\n';
+      } else {
+        out += (state[item.id] ? '[X]' : '[ ]') + ' ' + item.label + '\n';
+      }
+    });
+  });
+  out += '\n\nÅPNE PUNKTER\n' + '-'.repeat(40) + '\n';
+  document.querySelectorAll('#notesBody tr').forEach((tr, i) => {
+    const inp = tr.querySelectorAll('input, select');
+    if (inp[0].value) out += (i+1) + '. ' + inp[0].value +
+      (inp[1].value?' | '+inp[1].value:'') + (inp[2].value?' | '+inp[2].value:'') +
+      (inp[3].value?' | '+inp[3].value:'') + '\n';
+  });
+  const blob = new Blob([out], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'Produksjonsmøte_' + (document.querySelector('.meta-field input').value || 'eksport') + '.txt';
+  a.click();
+}
+
+function exportPdf() {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('no-NO', { day:'2-digit', month:'2-digit', year:'numeric' });
+  const prosjekt = document.querySelector('.meta-field input').value;
+  document.getElementById('printDate').textContent =
+    (prosjekt ? prosjekt + '  ·  ' : '') + 'Skrevet ut: ' + dateStr;
+  const wasOpen = SECTIONS.map(s => s._open);
+  SECTIONS.forEach(s => s._open = true);
+  render();
+  setTimeout(() => {
+    window.print();
+    SECTIONS.forEach((s, i) => s._open = wasOpen[i]);
+    render();
+  }, 120);
+}
+
+function kopierTekst() {
+  const meta = document.querySelectorAll('.meta-field input');
+  let out = 'PRODUKSJONSMØTE – SJEKKLISTE (Spectre Beta 2.0)\n' + '='.repeat(52) + '\n\n';
+  const labels = ['Prosjekt','Dato','Prosjektleder','Venue','Tilstede','Easy-job ref'];
+  meta.forEach((el, i) => { if (el.value) out += labels[i] + ': ' + el.value + '\n'; });
+  out += '\n';
+  SECTIONS.forEach(sec => {
+    out += '\n' + sec.num + '. ' + sec.title.toUpperCase() + '\n' + '-'.repeat(40) + '\n';
+    sec.items.forEach(item => {
+      if (item.id === 'sja') {
+        const v = document.querySelector('input[name="sja"]:checked');
+        out += '[SJA] ' + (v ? v.value.toUpperCase() : '?') + ' – tiltak avklart\n';
+      } else {
+        out += (state[item.id] ? '[X]' : '[ ]') + ' ' + item.label + '\n';
+      }
+    });
+  });
+  out += '\n\nÅPNE PUNKTER\n' + '-'.repeat(40) + '\n';
+  document.querySelectorAll('#notesBody tr').forEach((tr, i) => {
+    const inp = tr.querySelectorAll('input, select');
+    if (inp[0].value) out += (i+1) + '. ' + inp[0].value +
+      (inp[1].value?' | '+inp[1].value:'') + (inp[2].value?' | '+inp[2].value:'') +
+      (inp[3].value?' | '+inp[3].value:'') + '\n';
+  });
+  navigator.clipboard.writeText(out).then(() => {
+    const btn = event.target;
+    const orig = btn.textContent;
+    btn.textContent = '✓ Kopiert!';
+    btn.style.borderColor = 'var(--green)'; btn.style.color = 'var(--green)';
+    setTimeout(() => { btn.textContent = orig; btn.style.borderColor = ''; btn.style.color = ''; }, 2000);
+  });
+}
+
+// Banner vises alltid som standard (CSS).
+// Skjul det kun når JavaScript faktisk kjører OK i nettleseren.
+document.getElementById('spBanner').classList.add('hidden');
+
+render();
+</script>
+</body>
+</html>
